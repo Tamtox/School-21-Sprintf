@@ -3,19 +3,16 @@ CFLAGS=-Wall -Werror -Wextra
 
 all: clean test
  
-rebuild: clean sprintf
+rebuild: clean s21_sprintf
 
 test:
 	$(CC) $(CFLAGS) testprintf.c -o test
 
-sprintf: sprintf.o  common_modules.o
-	$(CC) $(CFLAGS) sprintf.o  common_modules.o -o sprintf
+s21_sprintf: s21_sprintf.o  
+	$(CC) $(CFLAGS) s21_sprintf.o   -o s21_sprintf
 
-sprintf.o:
-	$(CC) $(CFLAGS) -c sprintf.c -o sprintf.o
-
-common_modules.o:
-	$(CC) $(CFLAGS) -c common_modules.c -o common_modules.o
+s21_sprintf.o:
+	$(CC) $(CFLAGS) -c s21_sprintf.c -o s21_sprintf.o
 
 clean:
-	rm -rf *.o sprintf test
+	rm -rf *.o s21_sprintf test

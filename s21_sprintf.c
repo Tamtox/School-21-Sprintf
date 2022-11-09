@@ -5,17 +5,22 @@
 
 #include "s21_sprintf.h"
 
+// Slice str part 
+void SliceStr(char *str, char *result, int from, int to) {
+  for (int i = 0; i < to - from; i++) {
+    result[i] = str[from + i];
+  }
+  result[to - from] = '\0';
+}
+
 // Find where specifier ends (need to add the type check with argument)
 int FindEndOfSpecifier(char *str, int start_pos, int str_len) {
   int end_pos = -1;
   char *allowed_specifiers = "cdifsugGeExXonp";
-  int spec_len = strlen(allowed_specifiers);
   for (int i = start_pos; i < str_len; i++) {
-    for (int j = 0; j < spec_len; j++) {
-      if (str[i] == allowed_specifiers[j]) {
-        end_pos = i;
-        break;
-      }
+    if (strchr(allowed_specifiers, str[i])) {
+      end_pos = i + 1;
+      break;
     }
     if (end_pos > 0) {
       break;
@@ -24,12 +29,12 @@ int FindEndOfSpecifier(char *str, int start_pos, int str_len) {
   return end_pos;
 }
 
-// Check specifier for unfit chars
-void CheckSpec () {
+// // Check specifier for unfit chars
+// void CheckSpec () {
 
-}
+// }
 
-// Print error
+// // Print error
 void PrintError (char *message) {
   fprintf(stderr, message);
   exit(1);
@@ -67,52 +72,58 @@ void SetFlag(specifierEntry *entry, char flag) {
     } else {
       entry->flag_zero = true;
     }
-  } else {
-    fprintf(stderr, "Unknown conversion type character '%c' in format", flag);
-    exit(1);
   }
 }
 
 // Read specifier and set its parameters
-void ReadSpecifier(char *spec, specifierEntry *entry ) {
+void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
   int spec_len = strlen(spec);
-  // Set specifier type
-  entry->type = spec[spec_len - 1];
+  char *allowed_chars = "+- #0123456789*.hlL";
   char *flags = "+- #0";
+  char *width = "123456789*";
+  // char *precision = ".123456789*";
+  // char *length = "hlL";
   int flag_mode = 1;
   int width_mode = 0;
-  int precision_mode = 0;
-  int length_mode = 0;
-  for (int i = 0; i < spec_len; i ++) {
-    // Chech unfit chars
-
+  // int precision_mode = 0;
+  // int length_mode = 0;
+  printf("%s\n", spec);
+  printf("%c\n", entry->type);
+  for (int i = 1; i < spec_len - 1; i ++) {
+    // Check unfit chars
+    if (!strchr(allowed_chars, spec[i])) {
+      fprintf(stderr, "Unknown conversion type character '%c' in format", spec[i]);
+      exit(1);
+    }
     // Check flags
-    if (flag_mode) {
-      if (strchr(flags, spec[i])) {
+    if (strchr(flags, spec[i])) {
+      if (flag_mode) {
         SetFlag(entry, spec[i]);
       } else {
-        flag_mode = 0;
-        width_mode = 1;
+        PrintError("too many arguments for format");
       }
+    } else {
+      flag_mode = 0;
+      width_mode = 1;
     }
     // Check width
-    if (spec[i] ) {
+    if (strchr(width, spec[i])) {
 
     }
-    // Check precision
-    if(spec[i] == '.') {
-      fprintf(stderr, "Precision used with '%c' gnu_printf format");
-      exit(1);
-    } else {
-      precision_mode = 0;
-    }
-    // Check length
-    if (spec[i]) {
+    // // Check precision
+    // if(spec[i] == '.') {
+    //   fprintf(stderr, "Precision used with '%c' gnu_printf format");
+    //   exit(1);
+    // } else {
+    //   precision_mode = 0;
+    // }
+    // // Check length
+    // if (spec[i]) {
 
-    } else {
-      length_mode = 0;
-      break; 
-    }
+    // } else {
+    //   length_mode = 0;
+    //   break; 
+    // }
   }
 }
 
@@ -120,32 +131,30 @@ void Sprintf(char *buff, char *str, ...) {
   // int total_args = 0;
   va_list ap;
   va_start(ap, str);
+  if(buff[0]) {
 
-  int buff_size = sizeof(buff);
+  }
   int str_len = strlen(str);
-  printf("%d , %d", str_len, buff_size);
-
   // Parse str according to format :%[flags][width][.precision][length]specifier.
-  char output[500] = {'\0'};
-  char *allowed_specifiers = "cdifsugGeExXonp";
+  // char output[500] = {'\0'};
   for (int i = 0; i < str_len; i++) {
     // Detrmine the positions of specifier start and end
     if (str[i] == '%') {
       int spec_end = FindEndOfSpecifier(str, i + 1, str_len);
-      if (spec_end < 1) {
-
-      } 
+      // Copy specifier
+      specifierEntry entry = {false,false,false,false,false,-1,-1,'n',str[spec_end - 1]};
+      char specifier[100] = {'\0'};
+      SliceStr(str, specifier, i, spec_end);
+      ReadCheckSpecifier(specifier, &entry);
+      i = spec_end - 1;
     }
-    // Compare the types of specifier and corresponding argument
-    // Parse specifier
   }
   // return str_len;
 }
 
 int main() {
   char buff[20] = {'\0'};
-  char *str = "abc";
+  char *str = "This %2.5s%+&2d";
   Sprintf(buff, str);
-  // printf("%s,% dz\t", str, 6);
   return 0;
 }
