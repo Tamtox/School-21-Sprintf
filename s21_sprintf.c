@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sprintf.h"
+#include "s21_sprintf.h"
 
 // Find where specifier ends (need to add the type check with argument)
 int FindEndOfSpecifier(char *str, int start_pos, int str_len) {
