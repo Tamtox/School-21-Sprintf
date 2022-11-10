@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Werror -Wextra
 
-all: clean test
+all: clean test s21_sprintf
  
 rebuild: clean s21_sprintf test
 
