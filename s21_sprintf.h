@@ -9,8 +9,8 @@ typedef struct SpecifierEntry {
     bool flag_space;
     bool flag_sharp;
     bool flag_zero;
-    int width;
-    int precision;
+    char width[50];
+    char precision[50];
     char length;
     char type;
 } specifierEntry;

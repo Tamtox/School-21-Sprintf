@@ -3,7 +3,7 @@ CFLAGS=-Wall -Werror -Wextra
 
 all: clean test
  
-rebuild: clean s21_sprintf
+rebuild: clean s21_sprintf test
 
 test:
 	$(CC) $(CFLAGS) testprintf.c -o test

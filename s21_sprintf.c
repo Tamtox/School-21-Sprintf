@@ -29,12 +29,7 @@ int FindEndOfSpecifier(char *str, int start_pos, int str_len) {
   return end_pos;
 }
 
-// // Check specifier for unfit chars
-// void CheckSpec () {
-
-// }
-
-// // Print error
+// Print error
 void PrintError (char *message) {
   fprintf(stderr, message);
   exit(1);
@@ -75,18 +70,42 @@ void SetFlag(specifierEntry *entry, char flag) {
   }
 }
 
+// Set width
+int SetWidth (specifierEntry *entry, int start_pos, char *spec) {
+  int end_index = -1;
+}
+
+// Set precision
+int SetPrecision (specifierEntry *entry, int start_pos, char *spec) {
+  int end_index = -1;
+  char *precision = ".123456789*";
+  for (int i = start_pos; i < str_len; i++) {
+    if (strchr(allowed_specifiers, str[i])) {
+      end_pos = i + 1;
+      break;
+    }
+    if (end_pos > 0) {
+      break;
+    }
+  }
+}
+
+// Set length
+int SetLength (specifierEntry *entry, int start_pos, char *spec) {
+  int end_index = -1;
+}
+
 // Read specifier and set its parameters
 void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
   int spec_len = strlen(spec);
   char *allowed_chars = "+- #0123456789*.hlL";
   char *flags = "+- #0";
   char *width = "123456789*";
-  // char *precision = ".123456789*";
-  // char *length = "hlL";
+  char *length = "hlL";
   int flag_mode = 1;
   int width_mode = 0;
-  // int precision_mode = 0;
-  // int length_mode = 0;
+  int precision_mode = 0;
+  int length_mode = 0;
   printf("%s\n", spec);
   printf("%c\n", entry->type);
   for (int i = 1; i < spec_len - 1; i ++) {
@@ -110,20 +129,25 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
     if (strchr(width, spec[i])) {
 
     }
-    // // Check precision
-    // if(spec[i] == '.') {
-    //   fprintf(stderr, "Precision used with '%c' gnu_printf format");
-    //   exit(1);
-    // } else {
-    //   precision_mode = 0;
-    // }
-    // // Check length
-    // if (spec[i]) {
-
-    // } else {
-    //   length_mode = 0;
-    //   break; 
-    // }
+    // Check precision
+    if(spec[i] == '.') {
+      if (precision_mode) {
+        SetPrecision
+      } else {
+        PrintError("too many arguments for format");
+      }
+    }
+    // Check length
+    if (strchr(length, spec[i])) {
+      if (length_mode) {
+        if (spec[i])
+      } else {
+        PrintError("too many arguments for format");
+      }
+    } else {
+      length_mode = 0;
+      break; 
+    }
   }
 }
 
@@ -142,7 +166,7 @@ void Sprintf(char *buff, char *str, ...) {
     if (str[i] == '%') {
       int spec_end = FindEndOfSpecifier(str, i + 1, str_len);
       // Copy specifier
-      specifierEntry entry = {false,false,false,false,false,-1,-1,'n',str[spec_end - 1]};
+      specifierEntry entry = {false,false,false,false,false,{'\0'},{'\0'},'n',str[spec_end - 1]};
       char specifier[100] = {'\0'};
       SliceStr(str, specifier, i, spec_end);
       ReadCheckSpecifier(specifier, &entry);
