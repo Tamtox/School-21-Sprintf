@@ -5,6 +5,21 @@
 
 #include "s21_sprintf.h"
 
+void PrintSpecifier(specifierEntry *entry) {
+  if (entry->flag_minus) printf("-\n");
+  if (entry->flag_plus) printf("+\n");
+  if (entry->flag_sharp) printf("#\n");
+  if (entry->flag_space) printf("space\n");
+  if (entry->flag_zero) printf("0\n");
+  printf("Width is :%d\n", entry->width);
+  printf("Precision is :%d\n", entry->precision);
+  printf("Length h is :%d\n", entry->length_h);
+  printf("Length l is :%d\n", entry->length_l);
+  printf("Length L is :%d\n", entry->length_L);
+  printf("Type is :%c\n", entry->type);
+  printf("\n");
+}
+
 // Slice str part 
 void SliceStr(char *str, char *result, int from, int to) {
   for (int i = 0; i < to - from; i++) {
@@ -129,7 +144,6 @@ int SetWidth(specifierEntry *entry, int start_pos, char *spec) {
   // Set width
   if (digits_count) {
     int width = StringNumToInt(width_str);
-    printf("%d\n", width);
     entry->width = width;
   }
   return end_pos;
@@ -185,24 +199,78 @@ int SetPrecision(specifierEntry *entry, int start_pos, char *spec) {
   // Set precision
   if (digits_count) {
     int precision = StringNumToInt(precision_str);
-    printf("%d\n", precision);
     entry->precision = precision;
   }
   return end_pos;
 }
 
 // Set length
-// int SetLength (specifierEntry *entry, int start_pos, char *spec) {
-//   int end_pos = -1;
-//   return end_pos;
-// }
+int SetLength (specifierEntry *entry, int start_pos, char *spec) {
+  int spec_len = strlen(spec);
+  int end_pos = -1;
+  char *allowed_specifiers = "cdifsugGeExXonp";
+  char *length_chars = "hlL";
+  // Find end of length and unfit chars then set length chars
+  for (int i = start_pos; i < spec_len; i++) {
+    if (strchr(allowed_specifiers, spec[i])) {
+      end_pos = i;
+      break;
+    }
+    if (strchr(length_chars, spec[i])) {
+      if (spec[i] == 'h') {
+        entry->length_h = entry->length_h + 1;
+      } else if (spec[i] == 'l') {
+        entry->length_l = entry->length_l + 1;
+      } else if (spec[i] == 'L') {
+        entry->length_L = entry->length_L + 1;
+      }
+    } else {
+      fprintf(stderr, "Unknown conversion type character '%c' in format", spec[i]);
+      exit(1);
+    }
+  }
+  // Check length for errors
+  if (entry->length_L > 0) {
+    if ((entry->length_l || entry->length_h) || entry->length_L > 1) {
+      PrintError("error: too many arguments for format");
+    }
+  }
+  if (entry->length_h > 0) {
+    if ((entry->length_l || entry->length_L) || entry->length_h > 2) {
+      PrintError("error: too many arguments for format");
+    }
+  }
+  if (entry->length_l > 0) {
+    if ((entry->length_h || entry->length_h) || entry->length_l > 2) {
+      PrintError("error: too many arguments for format");
+    }
+  }
+  // Check length for types
+  if (entry->length_h) {
+    char *allowed_types = "idouxX";
+    if (!strchr(allowed_types, entry->type)) {
+      PrintError("h only applies to integer specifiers: i, d, o, u, x and X");
+    }
+  } else if (entry->length_l) {
+    char *allowed_types = "idouxXcs";
+    if (!strchr(allowed_types, entry->type)) {
+      PrintError("l only applies to integer specifiers: i, d, o, u, x and X as well as wide char and wide string");
+    }
+  } else if (entry->length_L) {
+    char *allowed_types = "eEfgG";
+    if (!strchr(allowed_types, entry->type)) {
+      PrintError("L only applies to floating point specifiers: e, E, f, g and G");
+    }
+  }
+  return end_pos;
+}
 
 // Read specifier and set its parameters
 void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
   int spec_len = strlen(spec);
   char *allowed_chars = "+- #0123456789*.hlL";
   char *flags = "+- #0";
-  char *width = "0123456789*";
+  char *width = "123456789*";
   char *length = "hlL";
   int flag_mode = 1;
   int width_mode = 0;
@@ -218,8 +286,9 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
     if (strchr(flags, spec[i])) {
       if (flag_mode) {
         SetFlag(entry, spec[i]);
+        continue;
       } else {
-        PrintError("too many arguments for format");
+        PrintError("error: too many arguments for format");
       }
     } else {
       flag_mode = 0;
@@ -252,7 +321,7 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
         length_mode = 1;
         continue;
       } else {
-        PrintError("too many arguments for format");
+        PrintError("error: too many arguments for format");
       }
     } else {
       precision_mode = 0;
@@ -261,8 +330,11 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
     // Check length
     if (strchr(length, spec[i])) {
       if (length_mode) {
+        int length_end = SetLength(entry, i, spec);
+        i = length_end - 1;
+        break;
       } else {
-        PrintError("too many arguments for format");
+        PrintError("error: too many arguments for format");
       }
     } else {
       length_mode = 0;
@@ -280,16 +352,16 @@ void Sprintf(char *buff, char *str, ...) {
   }
   int str_len = strlen(str);
   // Parse str according to format :%[flags][width][.precision][length]specifier.
-  // char output[500] = {'\0'};
   for (int i = 0; i < str_len; i++) {
     // Detrmine the positions of specifier start and end
     if (str[i] == '%') {
       int spec_end = FindEndOfSpecifier(str, i + 1, str_len);
       // Copy specifier
-      specifierEntry entry = {false,false,false,false,false,-1,-1,'n',str[spec_end - 1]};
+      specifierEntry entry = {false,false,false,false,false,-1,-1,0,0,0,str[spec_end - 1]};
       char specifier[100] = {'\0'};
       SliceStr(str, specifier, i, spec_end);
       ReadCheckSpecifier(specifier, &entry);
+      PrintSpecifier(&entry);
       i = spec_end - 1;
     }
   }
@@ -297,8 +369,8 @@ void Sprintf(char *buff, char *str, ...) {
 }
 
 int main() {
-  char buff[20] = {'\0'};
-  char *str = "This %12.5555123s";
+  char buff[500] = {'\0'};
+  char *str = "This %-+0# 12.123lls %-23.5ld";
   Sprintf(buff, str);
   return 0;
 }

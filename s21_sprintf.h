@@ -11,7 +11,9 @@ typedef struct SpecifierEntry {
     bool flag_zero;
     int width;
     int precision;
-    char length;
+    int length_h;
+    int length_l;
+    int length_L;
     char type;
 } specifierEntry;
 

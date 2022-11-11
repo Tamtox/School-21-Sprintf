@@ -7,9 +7,9 @@ int main() {
   char c = 'c';
   printf("%c\n" ,c);
   char *str = "This";
-  printf("%s\n", str);
+  printf("%.10s\n", str);
   int num = 123;
-  printf("%05d\n", num);
+  printf("%d\n", num);
   float flt = 8.7;
   printf("%.1f\n", flt);
   return 0;
