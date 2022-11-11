@@ -65,6 +65,14 @@ void PrintError (char *message) {
 
 // Read and set flag
 void SetFlag(specifierEntry *entry, char flag) {
+  // Handle specifier types with unfit flags
+  if (entry->type == 'c' || entry->type == 's') {
+    char *unfit_flags = "+#0 ";
+    if (strchr(unfit_flags, flag)) {
+      fprintf(stderr, "error: '%c' flag used with '%c' gnu_printf format", flag, entry->type);
+      exit(1);
+    }
+  }
   if (flag == '+') {
     if (entry->flag_plus) {
       PrintError("Repeated '+' flag in format");
@@ -344,7 +352,6 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
 }
 
 void Sprintf(char *buff, char *str, ...) {
-  // int total_args = 0;
   va_list ap;
   va_start(ap, str);
   if(buff[0]) {
@@ -361,16 +368,40 @@ void Sprintf(char *buff, char *str, ...) {
       char specifier[100] = {'\0'};
       SliceStr(str, specifier, i, spec_end);
       ReadCheckSpecifier(specifier, &entry);
-      PrintSpecifier(&entry);
+      // Set width from argument or from entry
+      int width = 0;
+      if (entry.width == -2) {
+        int arg_width = va_arg(ap, int);
+        width = arg_width;
+      } else {
+        width = entry.width;
+      }
+      printf("Width is : %d\n", width);
+      // Set precision from argument or from entry
+      int precision = 0;
+      if (entry.precision == -2) {
+        int arg_precision = va_arg(ap, int);
+        precision = arg_precision;
+      } else {
+        precision = entry.precision;
+      }
+      printf("Precision is : %d\n", precision);
+      if (entry.type == 'd') {
+        int arg = va_arg(ap, int);
+        printf("%d\n", arg);
+      } else if (entry.type == 'c') {
+        int arg = va_arg(ap, int);
+        printf("%c\n", arg);
+      }
+      // PrintSpecifier(&entry);
       i = spec_end - 1;
     }
   }
-  // return str_len;
 }
 
 int main() {
   char buff[500] = {'\0'};
-  char *str = "This %-+0# 12.123lls %-23.5ld";
-  Sprintf(buff, str);
+  char *str = "This %-+0# *.*d %c";
+  Sprintf(buff, str, 22, 12, 5,'d');
   return 0;
 }
