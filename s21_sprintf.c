@@ -24,6 +24,7 @@ void PrintSpecifier(specifierEntry *entry) {
 // Copy specifier into buffer
 // void CpyFormattedSpecifier(char *buff, int buffPos, specifierEntry *entry) {
 
+//   for (int )
 // }
 
 // Slice str part 
@@ -71,65 +72,78 @@ int FindEndOfSpecifier(char *str, int start_pos, int str_len) {
 
 // Read and set flag
 void SetFlag(specifierEntry *entry, char flag) {
-  // Handle flags unfit for %c and %s
-  if (entry->type == 'c' || entry->type == 's') {
-    char *unfit_flags = "+#0 ";
-    if (strchr(unfit_flags, flag)) {
-      fprintf(stderr, "error: '%c' flag used with '%c' gnu_printf format", flag, entry->type);
-      exit(1);
-    }
-  }
-  // Handle flags unfit for %d or %i
-  if (entry->type == 'd' || entry->type == 'i') {
-    if (flag == '#') {
-      fprintf(stderr, "error: '%c' flag used with '%c' gnu_printf format", flag, entry->type);
-      exit(1);
-    }
-  }
-  // Set flags and check for incompatible flags
+  // Flag plus
   if (flag == '+') {
+    char *not_compatible = "csu";
+    if (strchr(not_compatible, entry->type)) {
+      fprintf(stderr, "error: '+' flag used with '%c' gnu_printf format", entry->type);
+      exit(1);
+    }
     // Flag ' ' is ignored when + is present
     if (entry->flag_space) {
       PrintError("error: ' ' flag ignored with '+' flag in gnu_printf format");
     }
     if (entry->flag_plus) {
-      PrintError("Repeated '+' flag in format");
+      PrintError("error: repeated '+' flag in format");
     } else {
       entry->flag_plus = true;
     }
-  } else if (flag == '-') {
+  } 
+  // flag minus
+  else if (flag == '-') {
     // Flag 0 is ignored when - is present
     if (entry->flag_zero) {
       PrintError("error: '0' flag ignored with '-' flag in gnu_printf format");
     }
     if (entry->flag_minus) {
-      PrintError("Repeated '-' flag in format");
+      PrintError("error: repeated '-' flag in format");
     } else {
       entry->flag_minus = true;
     }
-  } else if (flag == ' ') {
+  } 
+  // Flag space
+  else if (flag == ' ') {
+    char *not_compatible = "csu";
+    if (strchr(not_compatible, entry->type)) {
+      fprintf(stderr, "error: '+' flag used with '%c' gnu_printf format", entry->type);
+      exit(1);
+    }
     // Flag ' ' is ignored when + is present
     if (entry->flag_plus) {
       PrintError("error: ' ' flag ignored with '+' flag in gnu_printf format");
     }
     if (entry->flag_space) {
-      PrintError("Repeated ' ' flag in format");
+      PrintError("error: repeated ' ' flag in format");
     } else {
       entry->flag_space = true;
     }
-  } else if (flag == '#') {
+  } 
+  // Flag sharp
+  else if (flag == '#') {
+    char *not_compatible = "csdiu";
+    if (strchr(not_compatible, entry->type)) {
+      fprintf(stderr, "error: '#' flag used with '%c' gnu_printf format", entry->type);
+      exit(1);
+    }
     if (entry->flag_sharp) {
-      PrintError("Repeated '#' flag in format");
+      PrintError("error: repeated '#' flag in format");
     } else {
       entry->flag_sharp = true;
     }
-  } else if (flag == '0') {
+  }
+  // Flag zero
+   else if (flag == '0') {
+    char *not_compatible = "cs";
+    if (strchr(not_compatible, entry->type)) {
+      fprintf(stderr, "error: '+' flag used with '%c' gnu_printf format", entry->type);
+      exit(1);
+    }
     // Flag 0 is ignored when - is present
     if (entry->flag_minus) {
       PrintError("error: '0' flag ignored with '-' flag in gnu_printf format");
     }
     if (entry->flag_zero) {
-      PrintError("Repeated '0' flag in format");
+      PrintError("error: repeated '0' flag in format");
     } else {
       entry->flag_zero = true;
     }
@@ -154,7 +168,7 @@ int SetWidth(specifierEntry *entry, int start_pos, char *spec) {
       break;
     }
     if (!strchr(width_chars, spec[i])) {
-      fprintf(stderr, "Unknown conversion type character '%c' in format", spec[i]);
+      fprintf(stderr, "error: unknown conversion type character '%c' in format", spec[i]);
       exit(1);
     }
     if (strchr(width_chars, spec[i])) {
@@ -169,12 +183,12 @@ int SetWidth(specifierEntry *entry, int start_pos, char *spec) {
   SliceStr(spec, width_str, start_pos, end_pos);
   // Throw error if both digits and * are present
   if (digits_count && star_count) {
-    PrintError("Unknown conversion type character '*' in format");
+    PrintError("error: unknown conversion type character '*' in format");
   }
   if (star_count) {
     // Throw error if more than one star
     if (star_count > 1) {
-      PrintError("Unknown conversion type character '*' in format");
+      PrintError("error: unknown conversion type character '*' in format");
     } else {
       entry->width = -2;
     }
@@ -189,6 +203,14 @@ int SetWidth(specifierEntry *entry, int start_pos, char *spec) {
 
 // Set precision
 int SetPrecision(specifierEntry *entry, int start_pos, char *spec) {
+  // Check incompatible flags
+  char *types = "diu";
+  if (strchr(types, entry->type)) {
+    if (entry->flag_zero) {
+      fprintf(stderr, "error: '0' flag ignored with precision and '%c' gnu_printf format", entry->type);
+      exit(1);
+    }
+  }
   int spec_len = strlen(spec);
   int end_pos = -1;
   char *precision_chars = "0123456789*";
@@ -205,7 +227,7 @@ int SetPrecision(specifierEntry *entry, int start_pos, char *spec) {
       break;
     }
     if (!strchr(precision_chars, spec[i])) {
-      fprintf(stderr, "Unknown conversion type character '%c' in format", spec[i]);
+      fprintf(stderr, "error: unknown conversion type character '%c' in format", spec[i]);
       exit(1);
     }
     if (strchr(precision_chars, spec[i])) {
@@ -220,12 +242,12 @@ int SetPrecision(specifierEntry *entry, int start_pos, char *spec) {
   SliceStr(spec, precision_str, start_pos, end_pos);
   // Throw error if both digits and * are present
   if (digits_count && star_count) {
-    PrintError("Unknown conversion type character '*' in format");
+    PrintError("error: unknown conversion type character '*' in format");
   }
   if (star_count) {
     // Throw error if more than one star
     if (star_count > 1) {
-      PrintError("Unknown conversion type character '*' in format");
+      PrintError("error: unknown conversion type character '*' in format");
     } else {
       entry->precision = -2;
     }
@@ -263,7 +285,7 @@ int SetLength (specifierEntry *entry, int start_pos, char *spec) {
         entry->length_L = entry->length_L + 1;
       }
     } else {
-      fprintf(stderr, "Unknown conversion type character '%c' in format", spec[i]);
+      fprintf(stderr, "error: Unknown conversion type character '%c' in format", spec[i]);
       exit(1);
     }
   }
@@ -287,17 +309,17 @@ int SetLength (specifierEntry *entry, int start_pos, char *spec) {
   if (entry->length_h) {
     char *allowed_types = "idouxX";
     if (!strchr(allowed_types, entry->type)) {
-      PrintError("h only applies to integer specifiers: i, d, o, u, x and X");
+      PrintError("error: h only applies to integer specifiers: i, d, o, u, x and X");
     }
   } else if (entry->length_l) {
     char *allowed_types = "idouxXcs";
     if (!strchr(allowed_types, entry->type)) {
-      PrintError("l only applies to integer specifiers: i, d, o, u, x and X as well as wide char and wide string");
+      PrintError("error: l only applies to integer specifiers: i, d, o, u, x and X as well as wide char and wide string");
     }
   } else if (entry->length_L) {
     char *allowed_types = "eEfgG";
     if (!strchr(allowed_types, entry->type)) {
-      PrintError("L only applies to floating point specifiers: e, E, f, g and G");
+      PrintError("error: L only applies to floating point specifiers: e, E, f, g and G");
     }
   }
   return end_pos;
@@ -317,7 +339,7 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
   for (int i = 1; i < spec_len - 1; i ++) {
     // Check unfit chars
     if (!strchr(allowed_chars, spec[i])) {
-      fprintf(stderr, "Unknown conversion type character '%c' in format", spec[i]);
+      fprintf(stderr, "error: unknown conversion type character '%c' in format", spec[i]);
       exit(1);
     }
     // Check flags
@@ -425,7 +447,7 @@ void Sprintf(char *buff, char *str, ...) {
 
 int main() {
   char buff[500] = {'\0'};
-  char *str = "This %*.*d %c\n testing";
+  char *str = "This %*.*d %+c\n testing";
   Sprintf(buff, str, 22, 12, 5,'d');
   printf("%s", buff);
   return 0;

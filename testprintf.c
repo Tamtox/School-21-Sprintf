@@ -9,22 +9,18 @@ int main() {
   printf("%c\n" ,c);
   // %s spec
   char *str = "This";
-  printf("%s\n", str);
+  printf("%3.3s\n", str);
   // %d spec
-  int num = -123;
-  printf("%010d\n", num);
+  int num = 123;
+  printf("%3.3d\n", num);
   // %i spec
   int num1 = -100;
-  printf("%i\n", num1);
+  printf("%3.3i\n", num1);
   // %u spec
   int num2 = 33;
-  printf("%u\n", num2);
+  printf("%3.3u\n", num2);
   // %f spec
   float flt = 8.7;
-  printf("%10.1f\n", flt);
-  char buff[50] = {'\0'};
-  char * toCpy = "Testing %10s\n\n";
-  sprintf(buff, toCpy, "abc");
-  printf("%s", buff);
+  printf("%3.3f\n", flt);
   return 0;
 }
