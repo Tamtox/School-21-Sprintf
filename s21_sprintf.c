@@ -7,11 +7,11 @@
 
 // Print specifier struct for testing purposes
 void PrintSpecifier(specifierEntry *entry) {
-  if (entry->flag_minus) printf("-\n");
-  if (entry->flag_plus) printf("+\n");
-  if (entry->flag_sharp) printf("#\n");
-  if (entry->flag_space) printf("space\n");
-  if (entry->flag_zero) printf("0\n");
+  printf("Flag minus: %d\n", entry->flag_minus ? 1 : 0);
+  printf("Flag plus: %d\n", entry->flag_plus ? 1 : 0);
+  printf("Flag space: %d\n", entry->flag_space ? 1 : 0);
+  printf("Flag sharp: %d\n", entry->flag_sharp ? 1 : 0);
+  printf("Flag zero: %d\n", entry->flag_zero ? 1 : 0);
   printf("Width is :%d\n", entry->width);
   printf("Precision is :%d\n", entry->precision);
   printf("Length h is :%d\n", entry->length_h);
@@ -22,7 +22,7 @@ void PrintSpecifier(specifierEntry *entry) {
 }
 
 // Copy specifier into buffer
-// void CpyFormattedSpecifier(char *buff, specifierEntry *entry) {
+// void CpyFormattedSpecifier(char *buff, int buffPos, specifierEntry *entry) {
 
 // }
 
@@ -384,9 +384,6 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
 void Sprintf(char *buff, char *str, ...) {
   va_list ap;
   va_start(ap, str);
-  if(buff[0]) {
-
-  }
   int str_len = strlen(str);
   // Parse str according to format :%[flags][width][.precision][length]specifier.
   int buffPos = 0;
@@ -399,25 +396,18 @@ void Sprintf(char *buff, char *str, ...) {
       char specifier[100] = {'\0'};
       SliceStr(str, specifier, i, spec_end);
       ReadCheckSpecifier(specifier, &entry);
-      // Set width from argument or from entry
-      int width = 0;
+      // Set width from argument
       if (entry.width == -2) {
         int arg_width = va_arg(ap, int);
-        width = arg_width;
-      } else {
-        width = entry.width;
+        entry.width = arg_width;
       }
-      printf("Width is : %d\n", width);
-      // Set precision from argument or from entry
-      int precision = 0;
+      // Set precision from argument
       if (entry.precision == -2) {
         int arg_precision = va_arg(ap, int);
-        precision = arg_precision;
-      } else {
-        precision = entry.precision;
+        entry.precision = arg_precision;
       }
-      printf("Precision is : %d\n", precision);
-      if (entry.type == 'd') {
+      PrintSpecifier(&entry);
+      if (entry.type == 'd' || entry.type == 'i') {
         int arg = va_arg(ap, int);
         printf("%d\n", arg);
       } else if (entry.type == 'c') {
@@ -426,16 +416,17 @@ void Sprintf(char *buff, char *str, ...) {
       }
       // PrintSpecifier(&entry);
       i = spec_end - 1;
-    } else {
-      // Copy non-specifier content to buffer
+      continue;
     }
-
+    buff[buffPos] = str[i];
+    buffPos++;
   }
 }
 
 int main() {
   char buff[500] = {'\0'};
-  char *str = "This %*.*d %c";
+  char *str = "This %*.*d %c\n testing";
   Sprintf(buff, str, 22, 12, 5,'d');
+  printf("%s", buff);
   return 0;
 }
