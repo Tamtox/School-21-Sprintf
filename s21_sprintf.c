@@ -5,6 +5,7 @@
 
 #include "s21_sprintf.h"
 
+// Print specifier struct for testing purposes
 void PrintSpecifier(specifierEntry *entry) {
   if (entry->flag_minus) printf("-\n");
   if (entry->flag_plus) printf("+\n");
@@ -20,6 +21,11 @@ void PrintSpecifier(specifierEntry *entry) {
   printf("\n");
 }
 
+// Copy specifier into buffer
+// void CpyFormattedSpecifier(char *buff, specifierEntry *entry) {
+
+// }
+
 // Slice str part 
 void SliceStr(char *str, char *result, int from, int to) {
   for (int i = 0; i < to - from; i++) {
@@ -28,7 +34,7 @@ void SliceStr(char *str, char *result, int from, int to) {
   result[to - from] = '\0';
 }
 
-// String number to int
+// String num to int num
 int StringNumToInt(char *num) {
   int result = 0;
   int num_len = strlen(num);
@@ -39,6 +45,12 @@ int StringNumToInt(char *num) {
     multiplyer*=10;
   }
   return result;
+}
+
+// Print error
+void PrintError (char *message) {
+  fprintf(stderr, message);
+  exit(1);
 }
 
 // Find where specifier ends (need to add the type check with argument)
@@ -55,12 +67,6 @@ int FindEndOfSpecifier(char *str, int start_pos, int str_len) {
     }
   }
   return end_pos;
-}
-
-// Print error
-void PrintError (char *message) {
-  fprintf(stderr, message);
-  exit(1);
 }
 
 // Read and set flag
@@ -383,8 +389,9 @@ void Sprintf(char *buff, char *str, ...) {
   }
   int str_len = strlen(str);
   // Parse str according to format :%[flags][width][.precision][length]specifier.
+  int buffPos = 0;
   for (int i = 0; i < str_len; i++) {
-    // Detrmine the positions of specifier start and end
+    // Detrmine the positions of specifier start and end then copy output to buffer
     if (str[i] == '%') {
       int spec_end = FindEndOfSpecifier(str, i + 1, str_len);
       // Copy specifier
@@ -419,13 +426,16 @@ void Sprintf(char *buff, char *str, ...) {
       }
       // PrintSpecifier(&entry);
       i = spec_end - 1;
+    } else {
+      // Copy non-specifier content to buffer
     }
+
   }
 }
 
 int main() {
   char buff[500] = {'\0'};
-  char *str = "This %# *.*d %c";
+  char *str = "This %*.*d %c";
   Sprintf(buff, str, 22, 12, 5,'d');
   return 0;
 }
