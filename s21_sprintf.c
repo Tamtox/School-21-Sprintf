@@ -65,7 +65,7 @@ void PrintError (char *message) {
 
 // Read and set flag
 void SetFlag(specifierEntry *entry, char flag) {
-  // Handle specifier types with unfit flags
+  // Handle flags unfit for %c and %s
   if (entry->type == 'c' || entry->type == 's') {
     char *unfit_flags = "+#0 ";
     if (strchr(unfit_flags, flag)) {
@@ -73,19 +73,39 @@ void SetFlag(specifierEntry *entry, char flag) {
       exit(1);
     }
   }
+  // Handle flags unfit for %d or %i
+  if (entry->type == 'd' || entry->type == 'i') {
+    if (flag == '#') {
+      fprintf(stderr, "error: '%c' flag used with '%c' gnu_printf format", flag, entry->type);
+      exit(1);
+    }
+  }
+  // Set flags and check for incompatible flags
   if (flag == '+') {
+    // Flag ' ' is ignored when + is present
+    if (entry->flag_space) {
+      PrintError("error: ' ' flag ignored with '+' flag in gnu_printf format");
+    }
     if (entry->flag_plus) {
       PrintError("Repeated '+' flag in format");
     } else {
       entry->flag_plus = true;
     }
   } else if (flag == '-') {
+    // Flag 0 is ignored when - is present
+    if (entry->flag_zero) {
+      PrintError("error: '0' flag ignored with '-' flag in gnu_printf format");
+    }
     if (entry->flag_minus) {
       PrintError("Repeated '-' flag in format");
     } else {
       entry->flag_minus = true;
     }
   } else if (flag == ' ') {
+    // Flag ' ' is ignored when + is present
+    if (entry->flag_plus) {
+      PrintError("error: ' ' flag ignored with '+' flag in gnu_printf format");
+    }
     if (entry->flag_space) {
       PrintError("Repeated ' ' flag in format");
     } else {
@@ -98,6 +118,10 @@ void SetFlag(specifierEntry *entry, char flag) {
       entry->flag_sharp = true;
     }
   } else if (flag == '0') {
+    // Flag 0 is ignored when - is present
+    if (entry->flag_minus) {
+      PrintError("error: '0' flag ignored with '-' flag in gnu_printf format");
+    }
     if (entry->flag_zero) {
       PrintError("Repeated '0' flag in format");
     } else {
@@ -401,7 +425,7 @@ void Sprintf(char *buff, char *str, ...) {
 
 int main() {
   char buff[500] = {'\0'};
-  char *str = "This %-+0# *.*d %c";
+  char *str = "This %# *.*d %c";
   Sprintf(buff, str, 22, 12, 5,'d');
   return 0;
 }
