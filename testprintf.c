@@ -12,7 +12,7 @@ int main() {
   printf("%s\n", str);
   // %d spec
   int num = -123;
-  printf("%d\n", num);
+  printf("%010d\n", num);
   // %i spec
   int num1 = -100;
   printf("%i\n", num1);
