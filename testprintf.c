@@ -4,23 +4,23 @@
 #include <string.h>
 
 int main() {
-  // %c spec
+  // 1 %c spec
   char c = 'c';
-  printf("%c\n" ,c);
-  // %s spec
+  printf("%c;\n" ,c);
+  // 2 %s spec
   char *str = "This";
-  printf("%3.3s\n", str);
-  // %d spec
-  int num = 123;
-  printf("%3.3d\n", num);
-  // %i spec
+  printf("%.s;\n", str);
+  // 3 %d spec
+  int num = 11;
+  printf("%3.3d;\n", num);
+  // 4 %i spec
   int num1 = -100;
-  printf("%3.3i\n", num1);
-  // %u spec
-  int num2 = 33;
-  printf("%3.3u\n", num2);
-  // %f spec
+  printf("%3.3i;\n", num1);
+  // 5 %u spec
+  int num2 = -33;
+  printf("%3.3u;\n", num2);
+  // 6 %f spec
   float flt = 8.7;
-  printf("%3.3f\n", flt);
+  printf("%20.3f;\n", flt);
   return 0;
 }

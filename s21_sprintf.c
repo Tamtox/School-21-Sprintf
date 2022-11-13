@@ -21,11 +21,40 @@ void PrintSpecifier(specifierEntry *entry) {
   printf("\n");
 }
 
-// Copy specifier into buffer
-// void CpyFormattedSpecifier(char *buff, int buffPos, specifierEntry *entry) {
+// Find length to print 
 
-//   for (int )
-// }
+// Copy %s specifier into buffer
+void CpyFormattedStrSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str) {
+  int str_len = strlen(str);
+  // Truncate string length with precision
+  if (entry->precision >= 0 && entry->precision < str_len) {
+    str_len = entry->precision;
+  }
+  // Set length to copy
+  int to_print = str_len;
+  if (entry->width > 0 && entry->width > str_len) {
+    to_print = entry->width;
+  }
+  // Write string to buffer depending on minus flag
+  int j = 0;
+  for (int i = 0; i < to_print; i++) {
+    if (entry->flag_minus) {
+      if (i < str_len) {
+      buff[*buffPos] = str[i];
+      } else {
+        buff[*buffPos] = ' ';
+      }
+    } else {
+      if (i < to_print - str_len) {
+        buff[*buffPos] = ' ';
+      } else {
+        buff[*buffPos] = str[j];
+        j+=1;
+      }
+    }
+    *buffPos = *buffPos + 1;
+  }
+}
 
 // Slice str part 
 void SliceStr(char *str, char *result, int from, int to) {
@@ -35,7 +64,7 @@ void SliceStr(char *str, char *result, int from, int to) {
   result[to - from] = '\0';
 }
 
-// String num to int num
+// String num to num
 int StringNumToInt(char *num) {
   int result = 0;
   int num_len = strlen(num);
@@ -47,6 +76,8 @@ int StringNumToInt(char *num) {
   }
   return result;
 }
+
+// Num to string num
 
 // Print error
 void PrintError (char *message) {
@@ -254,7 +285,11 @@ int SetPrecision(specifierEntry *entry, int start_pos, char *spec) {
   }
   // Set precision to 1 if only dot is present
   if (precision_len == 0) {
-    entry->precision = 1;
+    if (entry->type == 's') {
+      entry->precision = 0;
+    } else {
+      entry->precision = 1;
+    }
   }
   // Set precision
   if (digits_count) {
@@ -404,10 +439,12 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
 }
 
 void Sprintf(char *buff, char *str, ...) {
+  if (buff) {}
   va_list ap;
   va_start(ap, str);
   int str_len = strlen(str);
   // Parse str according to format :%[flags][width][.precision][length]specifier.
+  char placeholder[500] = {'\0'};
   int buffPos = 0;
   for (int i = 0; i < str_len; i++) {
     // Detrmine the positions of specifier start and end then copy output to buffer
@@ -428,27 +465,36 @@ void Sprintf(char *buff, char *str, ...) {
         int arg_precision = va_arg(ap, int);
         entry.precision = arg_precision;
       }
-      PrintSpecifier(&entry);
+      // PrintSpecifier(&entry);
       if (entry.type == 'd' || entry.type == 'i') {
         int arg = va_arg(ap, int);
         printf("%d\n", arg);
       } else if (entry.type == 'c') {
         int arg = va_arg(ap, int);
         printf("%c\n", arg);
+      } else if (entry.type == 's') {
+        char *arg = va_arg(ap, char *);
+        CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
       }
-      // PrintSpecifier(&entry);
       i = spec_end - 1;
       continue;
     }
-    buff[buffPos] = str[i];
+    placeholder[buffPos] = str[i];
     buffPos++;
   }
+  // Copy contents of placeholder into buffer
+  int i = 0;
+  while (placeholder[i] != '\0') {
+    buff[i] = placeholder[i];
+    i++;
+  }
+  buff[i] = '\0';
 }
 
 int main() {
   char buff[500] = {'\0'};
-  char *str = "This %*.*d %+c\n testing";
-  Sprintf(buff, str, 22, 12, 5,'d');
+  char *str = "This is %.s;";
+  Sprintf(buff, str, "Test");
   printf("%s", buff);
   return 0;
 }
