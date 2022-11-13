@@ -21,8 +21,30 @@ void PrintSpecifier(specifierEntry *entry) {
   printf("\n");
 }
 
-// Find length to print 
-
+// Copy %c specifier into buffer
+void CpyFormattedCharSpecifier(char *buff, int *buffPos, specifierEntry *entry, char c) {
+  int to_print = 1;
+  if (entry->width > 0) {
+    to_print = entry->width;
+  }
+  // Write char to buffer depending on minus flag
+  for (int i = 0; i < to_print; i++) {
+    if (entry->flag_minus) {
+      if (i  == 0) {
+        buff[*buffPos] = c;
+      } else {
+        buff[*buffPos] = ' ';
+      }
+    } else {
+      if (i == to_print - 1) {
+        buff[*buffPos] = c;
+      } else {
+        buff[*buffPos] = ' ';
+      }
+    }
+    *buffPos = *buffPos + 1;
+  }
+}
 // Copy %s specifier into buffer
 void CpyFormattedStrSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str) {
   int str_len = strlen(str);
@@ -234,6 +256,11 @@ int SetWidth(specifierEntry *entry, int start_pos, char *spec) {
 
 // Set precision
 int SetPrecision(specifierEntry *entry, int start_pos, char *spec) {
+  // Check incompatible specifiers
+  if (entry->type == 'c') {
+    fprintf(stderr, "error: precision used with '%c' gnu_printf format", entry->type);
+    exit(1);
+  }
   // Check incompatible flags
   char *types = "diu";
   if (strchr(types, entry->type)) {
@@ -471,7 +498,7 @@ void Sprintf(char *buff, char *str, ...) {
         printf("%d\n", arg);
       } else if (entry.type == 'c') {
         int arg = va_arg(ap, int);
-        printf("%c\n", arg);
+        CpyFormattedCharSpecifier(placeholder, &buffPos, &entry, arg);
       } else if (entry.type == 's') {
         char *arg = va_arg(ap, char *);
         CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
@@ -493,8 +520,9 @@ void Sprintf(char *buff, char *str, ...) {
 
 int main() {
   char buff[500] = {'\0'};
-  char *str = "This is %.s;";
-  Sprintf(buff, str, "Test");
+  // String
+  char *str = "This is string: %5c;";
+  Sprintf(buff, str, 'c');
   printf("%s", buff);
   return 0;
 }
