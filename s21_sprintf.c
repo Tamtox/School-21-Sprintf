@@ -21,6 +21,96 @@ void PrintSpecifier(specifierEntry *entry) {
   printf("\n");
 }
 
+// Push into string
+void PushChar(char *str, char c) {
+  int str_len  = strlen(str);
+  str[str_len] = c;
+  str[str_len + 1] = '\0';
+}
+
+// Pop from string
+void PopChar(char *str) {
+  int str_len  = strlen(str);
+  str[str_len - 1] = '\0';
+}
+
+// Shift from string
+void ShiftChar(char *str) {
+  int str_len  = strlen(str);
+  for (int i = str_len - 1; i > 0; i--) {
+    str[i - 1] = str[i];
+  }
+  str[str_len - 1] = '\0';
+}
+
+// Unshift into string
+void UnshiftChar(char *str, char c) {
+  int str_len  = strlen(str);
+  for (int i = str_len; i > 0; i--) {
+    str[i] = str[i - 1];
+  }
+  str[0] = c;
+  str[str_len + 1] = '\0';
+}
+
+// Slice str part 
+void SliceStr(char *str, char *result, int from, int to) {
+  for (int i = 0; i < to - from; i++) {
+    result[i] = str[from + i];
+  }
+  result[to - from] = '\0';
+}
+
+// Reverse string 
+void ReverseStr(char *str, int str_len) {
+  int break_point = str_len / 2;
+  for (int i = 0; i < str_len; i++) {
+    if (i == break_point) {
+      break;
+    }
+    char c1 = str[i];
+    str[i] = str[str_len - i - 1];
+    str[str_len - i - 1] = c1;
+  }
+}
+
+// String num to num
+int StringNumToInt(char *num) {
+  int result = 0;
+  int num_len = strlen(num);
+  int multiplyer = 1;
+  for (int i = num_len - 1; i >= 0; i--) {
+    int new_num = multiplyer * (num[i] - 48);
+    result = result + new_num;
+    multiplyer*=10;
+  }
+  return result;
+}
+
+// Num to string num
+void IntToString(int num, char *strNum) {
+  int num_cpy = num;
+  int i = 0;
+  if (num < 0) {
+    num_cpy = num * -1;
+    i = 1;
+  }
+  while (num_cpy > 0) {
+    int remainder = num_cpy % 10;
+    strNum[i] = remainder + 48;
+    i++;
+    num_cpy = num_cpy / 10;
+  }
+  strNum[i] = '\0';
+  ReverseStr(strNum, i);
+}
+
+// Print error
+void PrintError (char *message) {
+  fprintf(stderr, message);
+  exit(1);
+}
+
 // Copy %c specifier into buffer
 void CpyFormattedCharSpecifier(char *buff, int *buffPos, specifierEntry *entry, char c) {
   int to_print = 1;
@@ -45,6 +135,7 @@ void CpyFormattedCharSpecifier(char *buff, int *buffPos, specifierEntry *entry, 
     *buffPos = *buffPos + 1;
   }
 }
+
 // Copy %s specifier into buffer
 void CpyFormattedStrSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str) {
   int str_len = strlen(str);
@@ -78,33 +169,53 @@ void CpyFormattedStrSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
   }
 }
 
-// Slice str part 
-void SliceStr(char *str, char *result, int from, int to) {
-  for (int i = 0; i < to - from; i++) {
-    result[i] = str[from + i];
+// Copy d, i and u specifiers into buffer
+void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, int num) {
+  char str_num[100] = {'\0'};
+  IntToString(num, str_num);
+  printf("%s\n", str_num);
+  int str_len  = strlen(str_num);
+  // Apply precision
+  if (entry->precision > str_len) {
+    int diff = entry->precision - str_len;
+    for(int i = 0; i < diff; i++) {
+      UnshiftChar(str_num, '0');
+    }
+    str_len = entry->precision;
+    if (num < 0) {
+      UnshiftChar(str_num, '-');
+      str_len++;
+    }
   }
-  result[to - from] = '\0';
-}
-
-// String num to num
-int StringNumToInt(char *num) {
-  int result = 0;
-  int num_len = strlen(num);
-  int multiplyer = 1;
-  for (int i = num_len - 1; i >= 0; i--) {
-    int new_num = multiplyer * (num[i] - 48);
-    result = result + new_num;
-    multiplyer*=10;
+  // Add + sign if num is bigger than 0
+  if (entry->flag_plus && num > 0 && entry->precision > 0) {
+    UnshiftChar(str_num, '+');
+    str_len++;
   }
-  return result;
-}
-
-// Num to string num
-
-// Print error
-void PrintError (char *message) {
-  fprintf(stderr, message);
-  exit(1);
+  // Set length to copy
+  int to_print = str_len;
+  if (entry->width > 0 && entry->width > str_len) {
+    to_print = entry->width;
+  }
+  // Write string to buffer depending on minus flag
+  int j = 0;
+  for (int i = 0; i < to_print; i++) {
+    if (entry->flag_minus) {
+      if (i < str_len) {
+      buff[*buffPos] = str_num[i];
+      } else {
+        buff[*buffPos] = entry->flag_zero ? '0' : ' ';
+      }
+    } else {
+      if (i < to_print - str_len) {
+        buff[*buffPos] = entry->flag_zero ? '0' : ' ';
+      } else {
+        buff[*buffPos] = str_num[j];
+        j+=1;
+      }
+    }
+    *buffPos = *buffPos + 1;
+  }
 }
 
 // Find where specifier ends (need to add the type check with argument)
@@ -495,7 +606,7 @@ void Sprintf(char *buff, char *str, ...) {
       // PrintSpecifier(&entry);
       if (entry.type == 'd' || entry.type == 'i') {
         int arg = va_arg(ap, int);
-        printf("%d\n", arg);
+        CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, arg);
       } else if (entry.type == 'c') {
         int arg = va_arg(ap, int);
         CpyFormattedCharSpecifier(placeholder, &buffPos, &entry, arg);
@@ -521,8 +632,8 @@ void Sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  char *str = "This is string: %5c;";
-  Sprintf(buff, str, 'c');
+  char *str = "This is string:%+05d;";
+  Sprintf(buff, str, 12);
   printf("%s", buff);
   return 0;
 }
