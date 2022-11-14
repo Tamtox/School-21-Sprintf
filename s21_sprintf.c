@@ -149,23 +149,25 @@ void CpyFormattedStrSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
     to_print = entry->width;
   }
   // Write string to buffer depending on minus flag
-  int j = 0;
-  for (int i = 0; i < to_print; i++) {
-    if (entry->flag_minus) {
-      if (i < str_len) {
+  int diff = to_print - str_len;
+  if (entry->flag_minus) {
+    for (int i = 0;i < str_len; i++) {
       buff[*buffPos] = str[i];
-      } else {
-        buff[*buffPos] = ' ';
-      }
-    } else {
-      if (i < to_print - str_len) {
-        buff[*buffPos] = ' ';
-      } else {
-        buff[*buffPos] = str[j];
-        j+=1;
-      }
+      *buffPos = *buffPos + 1;
     }
-    *buffPos = *buffPos + 1;
+    for (int i = 0;i < diff; i++) {
+      buff[*buffPos] = ' ';
+      *buffPos = *buffPos + 1;
+    }
+  } else {
+    for (int i = 0;i < diff; i++) {
+      buff[*buffPos] = ' ';
+      *buffPos = *buffPos + 1;
+    }
+    for (int i = 0;i < str_len; i++) {
+      buff[*buffPos] = str[i];
+      *buffPos = *buffPos + 1;
+    }
   }
 }
 
@@ -173,24 +175,24 @@ void CpyFormattedStrSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
 void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, int num) {
   char str_num[100] = {'\0'};
   IntToString(num, str_num);
-  printf("%s\n", str_num);
   int str_len  = strlen(str_num);
   // Apply precision
-  if (entry->precision > str_len) {
+  if (entry->precision > 0) {
     int diff = entry->precision - str_len;
-    for(int i = 0; i < diff; i++) {
-      UnshiftChar(str_num, '0');
+    if (diff > 0) {
+      for(int i = 0; i < diff; i++) {
+        UnshiftChar(str_num, '0');
+      }
+      str_len = entry->precision;
     }
-    str_len = entry->precision;
     if (num < 0) {
       UnshiftChar(str_num, '-');
       str_len++;
     }
-  }
-  // Add + sign if num is bigger than 0
-  if (entry->flag_plus && num > 0 && entry->precision > 0) {
-    UnshiftChar(str_num, '+');
-    str_len++;
+    if (entry->flag_plus && num >= 0) {
+      UnshiftChar(str_num, '+');
+      str_len++;
+    }
   }
   // Set length to copy
   int to_print = str_len;
@@ -198,23 +200,40 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, i
     to_print = entry->width;
   }
   // Write string to buffer depending on minus flag
-  int j = 0;
-  for (int i = 0; i < to_print; i++) {
-    if (entry->flag_minus) {
-      if (i < str_len) {
-      buff[*buffPos] = str_num[i];
-      } else {
-        buff[*buffPos] = entry->flag_zero ? '0' : ' ';
+  int diff = to_print - str_len;
+  if (entry->flag_minus) {
+    if (!entry->precision) {
+      // !!! Insert not push sign
+      if (num < 0) {
+        UnshiftChar(str_num, '-');
+        str_len++;
       }
-    } else {
-      if (i < to_print - str_len) {
-        buff[*buffPos] = entry->flag_zero ? '0' : ' ';
-      } else {
-        buff[*buffPos] = str_num[j];
-        j+=1;
+      if (entry->flag_plus && num >= 0) {
+        UnshiftChar(str_num, '+');
+        str_len++;
       }
     }
-    *buffPos = *buffPos + 1;
+    for (int i = 0;i < str_len; i++) {
+      buff[*buffPos] = str_num[i];
+      *buffPos = *buffPos + 1;
+    }
+    for (int i = 0;i < diff; i++) {
+      buff[*buffPos] = entry->flag_zero ? '0' : ' ';
+      *buffPos = *buffPos + 1;
+    }
+  } else {
+    if (entry->flag_zero) {
+
+    } else {
+      for (int i = 0;i < diff; i++) {
+        buff[*buffPos] = entry->flag_zero ? '0' : ' ';
+        *buffPos = *buffPos + 1;
+      }
+      for (int i = 0;i < str_len; i++) {
+        buff[*buffPos] = str_num[i];
+        *buffPos = *buffPos + 1;
+      }
+    }
   }
 }
 
@@ -632,8 +651,8 @@ void Sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  char *str = "This is string:%+05d;";
-  Sprintf(buff, str, 12);
+  char *str = "This is string:%0+5d;";
+  Sprintf(buff, str, -12);
   printf("%s", buff);
   return 0;
 }

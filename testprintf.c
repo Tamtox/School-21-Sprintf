@@ -11,8 +11,8 @@ int main() {
   // char *str = "This";
   // printf("This is string: %5.10s;\n", str);
   // 3 %d spec
-  int num = 12;
-  printf("This is d num:%+5.3d;\n", num);
+  int num = -12;
+  printf("This is d num:%05d;\n", num);
   // 4 %i spec
   int num1 = 100;
   printf("This is i num:%+5.4i;\n", num1);
