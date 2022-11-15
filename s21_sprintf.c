@@ -72,12 +72,11 @@ int StringNumToInt(char *num) {
 }
 
 // Num to string num
-void IntToString(int num, char *strNum) {
-  int num_cpy = num;
+void NumToString(double num, char *strNum) {
+  double num_cpy = num;
   int i = 0;
   if (num < 0) {
     num_cpy = num * -1;
-    i = 1;
   }
   while (num_cpy > 0) {
     int remainder = num_cpy % 10;
@@ -150,9 +149,7 @@ void CpyFormattedStrSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
 }
 
 // Copy d, i and u specifiers into buffer
-void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, int num) {
-  char str_num[100] = {'\0'};
-  IntToString(num, str_num);
+void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str_num, int positive) {
   int str_len  = strlen(str_num);
   // Apply precision
   if (entry->precision > 0) {
@@ -163,11 +160,11 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, i
       }
       str_len = entry->precision;
     }
-    if (num < 0) {
+    if (!positive) {
       UnshiftChar(str_num, '-');
       str_len++;
     }
-    if (entry->flag_plus && num >= 0) {
+    if (entry->flag_plus && positive) {
       UnshiftChar(str_num, '+');
       str_len++;
     }
@@ -182,10 +179,10 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, i
     for (int i = 0; i < diff; i++) {
       UnshiftChar(str_num, '0');
     }
-    if (num < 0) {
+    if (!positive) {
       str_num[0] = '-';
     }
-    if (entry->flag_plus && num >= 0) {
+    if (entry->flag_plus && positive) {
       str_num[0] = '+';
     }
     int i = 0;
@@ -196,12 +193,12 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, i
     }
   } else {
     if (entry->precision < 0) {
-      if (num < 0) {
+      if (!positive) {
       UnshiftChar(str_num, '-');
       str_len++;
       diff--;
       }
-      if (entry->flag_plus && num >= 0) {
+      if (entry->flag_plus && positive) {
         UnshiftChar(str_num, '+');
         str_len++;
         diff--;
@@ -485,7 +482,7 @@ int SetLength (specifierEntry *entry, int start_pos, char *spec) {
     }
   }
   if (entry->length_h > 0) {
-    if ((entry->length_l || entry->length_L) || entry->length_h > 2) {
+    if ((entry->length_l || entry->length_L) || entry->length_h > 1) {
       PrintError("error: too many arguments for format");
     }
   }
@@ -592,7 +589,7 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
   }
 }
 
-void Sprintf(char *buff, char *str, ...) {
+int Sprintf(char *buff, char *str, ...) {
   if (buff) {}
   va_list ap;
   va_start(ap, str);
@@ -619,10 +616,35 @@ void Sprintf(char *buff, char *str, ...) {
         int arg_precision = va_arg(ap, int);
         entry.precision = arg_precision;
       }
-      // PrintSpecifier(&entry);
-      if (entry.type == 'd' || entry.type == 'i' || entry.type == 'u') {
-        int arg = va_arg(ap, int);
-        CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, arg);
+      char str_num[100] = {'\0'};
+      if (entry.type == 'd' ) {
+        if (entry.length_l == 1) {
+          long int arg = va_arg(ap, long int);
+          int positive = arg >= 0 ? 1 : 0; 
+          CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
+        } else if (entry.length_l == 2) {
+          long long int arg = va_arg(ap, long long int);
+          int positive = arg >= 0 ? 1 : 0; 
+          CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
+        } else if (entry.length_h == 1) {
+          short int arg = va_arg(ap, int);
+          int positive = arg >= 0 ? 1 : 0; 
+          CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
+        } else {
+          int arg = va_arg(ap, int);
+          NumToString(arg, str_num);
+          int positive = arg >= 0 ? 1 : 0; 
+          CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
+        }
+      } else if (entry.type == 'i') {
+        signed int arg = va_arg(ap, signed int);
+        NumToString(arg, str_num);
+        int positive = arg >= 0 ? 1 : 0; 
+        CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
+      } else if (entry.type == 'u') {
+        unsigned int arg = va_arg(ap, unsigned int);
+        NumToString(arg, str_num);
+        CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, 1);
       } else if (entry.type == 'c') {
         int arg = va_arg(ap, int);
         CpyFormattedCharSpecifier(placeholder, &buffPos, &entry, arg);
@@ -646,13 +668,16 @@ void Sprintf(char *buff, char *str, ...) {
     i++;
   }
   buff[i] = '\0';
+  return strlen(buff);
 }
 
 int main() {
   char buff[500] = {'\0'};
   // String
-  char *str = "This is string:%+-7d;";
-  Sprintf(buff, str, 0);
-  printf("%s", buff);
+  char *str = "This is %0.5d;\n";
+  Sprintf(buff, str, -5);
+  printf("%s\n", buff);
+  unsigned int x = 4294967291;
+  printf("%u", x);
   return 0;
 }

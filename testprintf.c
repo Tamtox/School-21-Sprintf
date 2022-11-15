@@ -11,14 +11,16 @@ int main() {
   // char *str = "This";
   // printf("This is string: %5.10s;\n", str);
   // 3 %d spec
-  int num = -1234;
-  printf("This is d num:%7.5d;\n", num);
+  char buff[50] = {'\0'};
+  int num = 69;
+  // char *y = "%0.*i;\n";
+  sprintf( buff, "%.*i;\n" , num, num);
   // 4 %i spec
-  int num1 = 100;
-  printf("This is i num:%+5.4i;\n", num1);
-  // 5 %u spec
-  int num2 = 33;
-  printf("This is u num:%5.4u;\n", num2);
+  // int num1 = 123;
+  // printf("This is i num:%.5i;\n", num1);
+  // // 5 %u spec
+  // int num2 = -5;
+  // printf("This is u num:%7.5u;\n", num2);
   // // 6 %f spec
   // float flt = 8.7;
   // printf("This is float:%20.3f;\n", flt);
