@@ -5,22 +5,6 @@
 
 #include "s21_sprintf.h"
 
-// Print specifier struct for testing purposes
-void PrintSpecifier(specifierEntry *entry) {
-  printf("Flag minus: %d\n", entry->flag_minus ? 1 : 0);
-  printf("Flag plus: %d\n", entry->flag_plus ? 1 : 0);
-  printf("Flag space: %d\n", entry->flag_space ? 1 : 0);
-  printf("Flag sharp: %d\n", entry->flag_sharp ? 1 : 0);
-  printf("Flag zero: %d\n", entry->flag_zero ? 1 : 0);
-  printf("Width is :%d\n", entry->width);
-  printf("Precision is :%d\n", entry->precision);
-  printf("Length h is :%d\n", entry->length_h);
-  printf("Length l is :%d\n", entry->length_l);
-  printf("Length L is :%d\n", entry->length_L);
-  printf("Type is :%c\n", entry->type);
-  printf("\n");
-}
-
 // Push into string
 void PushChar(char *str, char c) {
   int str_len  = strlen(str);
@@ -196,37 +180,49 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, i
   }
   // Set length to copy
   int to_print = str_len;
-  if (entry->width > 0 && entry->width > str_len) {
+  if (entry->width > str_len) {
     to_print = entry->width;
   }
-  // Write string to buffer depending on minus flag
   int diff = to_print - str_len;
-  if (entry->flag_minus) {
-    if (!entry->precision) {
-      // !!! Insert not push sign
-      if (num < 0) {
-        UnshiftChar(str_num, '-');
-        str_len++;
-      }
-      if (entry->flag_plus && num >= 0) {
-        UnshiftChar(str_num, '+');
-        str_len++;
-      }
+  if (entry->flag_zero) {
+    for (int i = 0; i < diff; i++) {
+      UnshiftChar(str_num, '0');
     }
-    for (int i = 0;i < str_len; i++) {
+    if (num < 0) {
+      str_num[0] = '-';
+    }
+    if (entry->flag_plus && num >= 0) {
+      str_num[0] = '+';
+    }
+    int i = 0;
+    while (str_num[i] != '\0') {
       buff[*buffPos] = str_num[i];
       *buffPos = *buffPos + 1;
-    }
-    for (int i = 0;i < diff; i++) {
-      buff[*buffPos] = entry->flag_zero ? '0' : ' ';
-      *buffPos = *buffPos + 1;
+      i++;
     }
   } else {
-    if (entry->flag_zero) {
-
+    if (num < 0) {
+      UnshiftChar(str_num, '-');
+      str_len++;
+      diff--;
+    }
+    if (entry->flag_plus && num >= 0) {
+      UnshiftChar(str_num, '+');
+      str_len++;
+      diff--;
+    }
+    if (entry->flag_minus) {
+      for (int i = 0;i < str_len; i++) {
+        buff[*buffPos] = str_num[i];
+        *buffPos = *buffPos + 1;
+      }
+      for (int i = 0;i < diff; i++) {
+        buff[*buffPos] = ' ';
+        *buffPos = *buffPos + 1;
+      }
     } else {
       for (int i = 0;i < diff; i++) {
-        buff[*buffPos] = entry->flag_zero ? '0' : ' ';
+        buff[*buffPos] = ' ';
         *buffPos = *buffPos + 1;
       }
       for (int i = 0;i < str_len; i++) {
@@ -632,6 +628,9 @@ void Sprintf(char *buff, char *str, ...) {
       } else if (entry.type == 's') {
         char *arg = va_arg(ap, char *);
         CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
+      } else if (entry.type == 'f') {
+        float arg = va_arg(ap, float);
+        CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
       }
       i = spec_end - 1;
       continue;
@@ -651,8 +650,8 @@ void Sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  char *str = "This is string:%0+5d;";
-  Sprintf(buff, str, -12);
+  char *str = "This is string:%7d;";
+  Sprintf(buff, str, 1234);
   printf("%s", buff);
   return 0;
 }
