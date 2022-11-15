@@ -4,15 +4,15 @@
 #include <string.h>
 
 int main() {
-  // // 1 %c spec
-  // char c = 'c';
-  // printf("This is char:%-5c;\n" ,c);
+  // 1 %c spec
+  // char c = '*';
+  // printf("This is char:%5c;\n" ,c);
   // // 2 %s spec
   // char *str = "This";
   // printf("This is string: %5.10s;\n", str);
   // 3 %d spec
-  int num = 1234;
-  printf("This is d num:%7d;\n", num);
+  int num = -1234;
+  printf("This is d num:%7.5d;\n", num);
   // 4 %i spec
   int num1 = 100;
   printf("This is i num:%+5.4i;\n", num1);

@@ -102,21 +102,15 @@ void CpyFormattedCharSpecifier(char *buff, int *buffPos, specifierEntry *entry, 
     to_print = entry->width;
   }
   // Write char to buffer depending on minus flag
+  int startPos = *buffPos;
   for (int i = 0; i < to_print; i++) {
-    if (entry->flag_minus) {
-      if (i  == 0) {
-        buff[*buffPos] = c;
-      } else {
-        buff[*buffPos] = ' ';
-      }
-    } else {
-      if (i == to_print - 1) {
-        buff[*buffPos] = c;
-      } else {
-        buff[*buffPos] = ' ';
-      }
-    }
+    buff[*buffPos] = ' ';
     *buffPos = *buffPos + 1;
+  }
+  if (entry->flag_minus) {
+    buff[startPos] = c;
+  } else {
+    buff[*buffPos - 1] = c;
   }
 }
 
@@ -201,15 +195,17 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, i
       i++;
     }
   } else {
-    if (num < 0) {
+    if (entry->precision < 0) {
+      if (num < 0) {
       UnshiftChar(str_num, '-');
       str_len++;
       diff--;
-    }
-    if (entry->flag_plus && num >= 0) {
-      UnshiftChar(str_num, '+');
-      str_len++;
-      diff--;
+      }
+      if (entry->flag_plus && num >= 0) {
+        UnshiftChar(str_num, '+');
+        str_len++;
+        diff--;
+      }
     }
     if (entry->flag_minus) {
       for (int i = 0;i < str_len; i++) {
@@ -232,6 +228,11 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, i
     }
   }
 }
+
+// Copy f specifier into buffer
+// void CpyFormattedFloatSpecifier(char *buff, int *buffPos, specifierEntry *entry, float num) {
+
+// }
 
 // Find where specifier ends (need to add the type check with argument)
 int FindEndOfSpecifier(char *str, int start_pos, int str_len) {
@@ -619,7 +620,7 @@ void Sprintf(char *buff, char *str, ...) {
         entry.precision = arg_precision;
       }
       // PrintSpecifier(&entry);
-      if (entry.type == 'd' || entry.type == 'i') {
+      if (entry.type == 'd' || entry.type == 'i' || entry.type == 'u') {
         int arg = va_arg(ap, int);
         CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, arg);
       } else if (entry.type == 'c') {
@@ -629,8 +630,8 @@ void Sprintf(char *buff, char *str, ...) {
         char *arg = va_arg(ap, char *);
         CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
       } else if (entry.type == 'f') {
-        float arg = va_arg(ap, float);
-        CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
+        // float arg = va_arg(ap, float);
+        // CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
       }
       i = spec_end - 1;
       continue;
@@ -650,8 +651,8 @@ void Sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  char *str = "This is string:%7d;";
-  Sprintf(buff, str, 1234);
+  char *str = "This is string:%+-7d;";
+  Sprintf(buff, str, 0);
   printf("%s", buff);
   return 0;
 }
