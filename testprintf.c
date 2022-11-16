@@ -31,24 +31,15 @@ void NumToString(double num, char *str_num) {
     str_num[i] = mult + 48;
     i++;
   }
+  printf("%lf\n", num);
   str_num[i] = '\0';
-}
-
-void FloatToString(double num) {
-  // int str_len = strlen(str_num);
-  if (num < 0) {
-    num = num * -1;
-  }
-  double flt = num - floorf(num);
-  printf("%lf", flt);
 }
 
 int main() {
   char str[100] = {'\0'};
-  float num = -13562.512345;
+  float num = -13562.51;
   NumToString(num, str);
   printf("%s\n", str);
   // printf("This is %#f;\n", -1111111.512345);
-  FloatToString(num);
   return 0;
 }
