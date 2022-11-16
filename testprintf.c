@@ -2,27 +2,53 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
+void NumToString(double num, char *str_num) {
+  if (num < 0) {
+    num = num * -1;
+  }
+  // Find biggest divisor
+  double biggest_divisor = 1;
+  while (1) {
+    if (num / biggest_divisor < 10) {
+      break;
+    }
+    biggest_divisor*=10;
+  }
+  // Digits to string
+  int i = 0;
+  while (biggest_divisor ) {
+    if (num < 10 && num >=1) {
+      int remain = num;
+      str_num[i] = remain + 48;
+      i++;
+      break;
+    }
+    int mult = num / biggest_divisor;
+    num = num - mult * biggest_divisor;
+    biggest_divisor/=10;
+    str_num[i] = mult + 48;
+    i++;
+  }
+  str_num[i] = '\0';
+}
+
+void FloatToString(double num) {
+  // int str_len = strlen(str_num);
+  if (num < 0) {
+    num = num * -1;
+  }
+  double flt = num - floorf(num);
+  printf("%lf", flt);
+}
 
 int main() {
-  // 1 %c spec
-  // char c = '*';
-  // printf("This is char:%5c;\n" ,c);
-  // // 2 %s spec
-  // char *str = "This";
-  // printf("This is string: %5.10s;\n", str);
-  // 3 %d spec
-  char buff[50] = {'\0'};
-  int num = 69;
-  // char *y = "%0.*i;\n";
-  sprintf( buff, "%.*i;\n" , num, num);
-  // 4 %i spec
-  // int num1 = 123;
-  // printf("This is i num:%.5i;\n", num1);
-  // // 5 %u spec
-  // int num2 = -5;
-  // printf("This is u num:%7.5u;\n", num2);
-  // // 6 %f spec
-  // float flt = 8.7;
-  // printf("This is float:%20.3f;\n", flt);
+  char str[100] = {'\0'};
+  float num = -13562.512345;
+  NumToString(num, str);
+  printf("%s\n", str);
+  // printf("This is %#f;\n", -1111111.512345);
+  FloatToString(num);
   return 0;
 }

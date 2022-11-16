@@ -45,19 +45,6 @@ void SliceStr(char *str, char *result, int from, int to) {
   result[to - from] = '\0';
 }
 
-// Reverse string 
-void ReverseStr(char *str, int str_len) {
-  int break_point = str_len / 2;
-  for (int i = 0; i < str_len; i++) {
-    if (i == break_point) {
-      break;
-    }
-    char c1 = str[i];
-    str[i] = str[str_len - i - 1];
-    str[str_len - i - 1] = c1;
-  }
-}
-
 // String num to num
 int StringNumToInt(char *num) {
   int result = 0;
@@ -71,21 +58,35 @@ int StringNumToInt(char *num) {
   return result;
 }
 
-// Num to string num
-void NumToString(double num, char *strNum) {
-  double num_cpy = num;
-  int i = 0;
+// Any number into string
+void NumToString(double num, char *str_num) {
   if (num < 0) {
-    num_cpy = num * -1;
+    num = num * -1;
   }
-  while (num_cpy > 0) {
-    int remainder = num_cpy % 10;
-    strNum[i] = remainder + 48;
+  // Find biggest divisor
+  double biggest_divisor = 1;
+  while (1) {
+    if (num / biggest_divisor < 10) {
+      break;
+    }
+    biggest_divisor*=10;
+  }
+  // Digits to string
+  int i = 0;
+  while (biggest_divisor ) {
+    if (num < 10 && num >=1) {
+      int remain = num;
+      str_num[i] = remain + 48;
+      i++;
+      break;
+    }
+    int mult = num / biggest_divisor;
+    num = num - mult * biggest_divisor;
+    biggest_divisor/=10;
+    str_num[i] = mult + 48;
     i++;
-    num_cpy = num_cpy / 10;
   }
-  strNum[i] = '\0';
-  ReverseStr(strNum, i);
+  str_num[i] = '\0';
 }
 
 // Print error
@@ -227,8 +228,13 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
 }
 
 // Copy f specifier into buffer
-// void CpyFormattedFloatSpecifier(char *buff, int *buffPos, specifierEntry *entry, float num) {
+// void CpyFormattedFloatSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str_num) {
+//   if (entry->precision) {
 
+//   } else {
+//     int str_len = strlen(str_num);
+//     // Push 0s to end of float if no precision
+//   }
 // }
 
 // Find where specifier ends (need to add the type check with argument)
@@ -617,17 +623,20 @@ int Sprintf(char *buff, char *str, ...) {
         entry.precision = arg_precision;
       }
       char str_num[100] = {'\0'};
-      if (entry.type == 'd' ) {
+      if (entry.type == 'd' || entry.type == 'i') {
         if (entry.length_l == 1) {
           long int arg = va_arg(ap, long int);
+          NumToString(arg, str_num);
           int positive = arg >= 0 ? 1 : 0; 
           CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
         } else if (entry.length_l == 2) {
           long long int arg = va_arg(ap, long long int);
+          NumToString(arg, str_num);
           int positive = arg >= 0 ? 1 : 0; 
           CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
         } else if (entry.length_h == 1) {
           short int arg = va_arg(ap, int);
+          NumToString(arg, str_num);
           int positive = arg >= 0 ? 1 : 0; 
           CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
         } else {
@@ -636,15 +645,24 @@ int Sprintf(char *buff, char *str, ...) {
           int positive = arg >= 0 ? 1 : 0; 
           CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
         }
-      } else if (entry.type == 'i') {
-        signed int arg = va_arg(ap, signed int);
-        NumToString(arg, str_num);
-        int positive = arg >= 0 ? 1 : 0; 
-        CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
       } else if (entry.type == 'u') {
-        unsigned int arg = va_arg(ap, unsigned int);
-        NumToString(arg, str_num);
-        CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, 1);
+        if (entry.length_l == 1) {
+          long unsigned int arg = va_arg(ap, long unsigned int);
+          NumToString(arg, str_num);
+          CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, 1);
+        } else if (entry.length_l == 2) {
+          long long unsigned int arg = va_arg(ap, long long unsigned int);
+          NumToString(arg, str_num);
+          CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, 1);
+        } else if (entry.length_h == 1) {
+          short unsigned int arg = va_arg(ap, unsigned int);
+          NumToString(arg, str_num);
+          CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, 1);
+        } else {
+          unsigned int arg = va_arg(ap, unsigned int);
+          NumToString(arg, str_num);
+          CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, 1);
+        }
       } else if (entry.type == 'c') {
         int arg = va_arg(ap, int);
         CpyFormattedCharSpecifier(placeholder, &buffPos, &entry, arg);
@@ -674,10 +692,7 @@ int Sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  char *str = "This is %0.5d;\n";
-  Sprintf(buff, str, -5);
+  Sprintf(buff, "This is %5.2d;\n", -5);
   printf("%s\n", buff);
-  unsigned int x = 4294967291;
-  printf("%u", x);
   return 0;
 }
