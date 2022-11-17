@@ -6,28 +6,6 @@
 
 #include "s21_sprintf.h"
 
-// Push into string
-void PushChar(char *str, char c) {
-  int str_len  = strlen(str);
-  str[str_len] = c;
-  str[str_len + 1] = '\0';
-}
-
-// Pop from string
-void PopChar(char *str) {
-  int str_len  = strlen(str);
-  str[str_len - 1] = '\0';
-}
-
-// Shift from string
-void ShiftChar(char *str) {
-  int str_len  = strlen(str);
-  for (int i = 0; i < str_len - 1; i++) {
-    str[i] = str[i + 1];
-  }
-  str[str_len - 1] = '\0';
-}
-
 // Unshift into string
 void UnshiftChar(char *str, char c) {
   int str_len  = strlen(str);
@@ -281,11 +259,6 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
     }
   }
 }
-
-// Copy f specifier into buffer
-// void CpyFormattedFltSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str_num) {
-
-// }
 
 // Find where specifier ends (need to add the type check with argument)
 int FindEndOfSpecifier(char *str, int start_pos, int str_len) {
@@ -645,7 +618,7 @@ void ReadCheckSpecifier(char *spec, specifierEntry *entry ) {
   }
 }
 
-int Sprintf(char *buff, char *str, ...) {
+int s21_sprintf(char *buff, char *str, ...) {
   if (buff) {}
   va_list ap;
   va_start(ap, str);
@@ -750,7 +723,7 @@ int Sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  Sprintf(buff, "|%+020f|\n", 1333.45);
+  s21_sprintf(buff, "|%+020f|\n", 1333.45);
   printf("%s", buff);
   return 0;
 }

@@ -17,5 +17,7 @@ typedef struct SpecifierEntry {
     char type;
 } specifierEntry;
 
+int s21_sprintf(char *buff, char *str, ...);
+
 
 #endif // SRC_S21_SPRINTF_H_
