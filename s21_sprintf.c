@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "s21_sprintf.h"
 
@@ -21,8 +22,8 @@ void PopChar(char *str) {
 // Shift from string
 void ShiftChar(char *str) {
   int str_len  = strlen(str);
-  for (int i = str_len - 1; i > 0; i--) {
-    str[i - 1] = str[i];
+  for (int i = 0; i < str_len - 1; i++) {
+    str[i] = str[i + 1];
   }
   str[str_len - 1] = '\0';
 }
@@ -45,6 +46,16 @@ void SliceStr(char *str, char *result, int from, int to) {
   result[to - from] = '\0';
 }
 
+// Reverse string
+void ReverseStr(char *str) {
+  int str_len = strlen(str);
+  for (int i = 0; i < str_len / 2; i++) {
+    char c = str[i];
+    str[i] = str[str_len - 1 - i];
+    str[str_len - 1 - i] = c;
+  }
+}
+
 // String num to num
 int StringNumToInt(char *num) {
   int result = 0;
@@ -58,35 +69,55 @@ int StringNumToInt(char *num) {
   return result;
 }
 
-// Any number into string
 void NumToString(double num, char *str_num) {
   if (num < 0) {
     num = num * -1;
   }
-  // Find biggest divisor
-  double biggest_divisor = 1;
-  while (1) {
-    if (num / biggest_divisor < 10) {
-      break;
-    }
-    biggest_divisor*=10;
-  }
-  // Digits to string
   int i = 0;
-  while (biggest_divisor ) {
-    if (num < 10 && num >=1) {
-      int remain = num;
-      str_num[i] = remain + 48;
-      i++;
+  while (1) {
+    if (num < 10) {
+      int x = num;
+      str_num[i] = x + 48;
       break;
     }
-    int mult = num / biggest_divisor;
-    num = num - mult * biggest_divisor;
-    biggest_divisor/=10;
-    str_num[i] = mult + 48;
+    int x = fmod(num, 10.0);
+    str_num[i] = x + 48;
+    i++;
+    num = num / 10;
+  }
+  str_num[i + 1] = '\0';
+  ReverseStr(str_num);
+}
+
+// Float to string
+void FloatToString (double num, char *str_num, int precision) {
+  if (num < 0) {
+    num = num * -1;
+  }
+  // Float adjustment
+  for (int i = 0; i < precision; i++) {
+    num *= 10;
+  }
+  // Number into string
+  char placeholder[100] = {'\0'};
+  NumToString(num, placeholder); 
+  int p_len = strlen(placeholder);
+  // Separate whole and float
+  int i = 0;
+  while (i < p_len - precision) {
+    str_num[i] = placeholder[i];
     i++;
   }
-  str_num[i] = '\0';
+  if (precision > 0) {
+    str_num[p_len - precision] = '.';
+    while (i < p_len) {
+      str_num[i + 1] = placeholder[i];
+      i++;
+    }
+    str_num[i + 1] = '\0';
+  } else {
+    str_num[i] = '\0';
+  }
 }
 
 // Print error
@@ -161,13 +192,21 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
       }
       str_len = entry->precision;
     }
-    if (!positive) {
-      UnshiftChar(str_num, '-');
-      str_len++;
-    }
-    if (entry->flag_plus && positive) {
-      UnshiftChar(str_num, '+');
-      str_len++;
+    // Set preceding minus , plus or empty space
+    if (!positive || entry->flag_plus) {
+      if (!positive) {
+        UnshiftChar(str_num, '-');
+        str_len++;
+      }
+      if (entry->flag_plus && positive) {
+        UnshiftChar(str_num, '+');
+        str_len++;
+      }
+    } else {
+      if (entry->flag_space) {
+        UnshiftChar(str_num, ' ');
+        str_len++;
+      }
     }
   }
   // Set length to copy
@@ -180,11 +219,18 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
     for (int i = 0; i < diff; i++) {
       UnshiftChar(str_num, '0');
     }
-    if (!positive) {
-      str_num[0] = '-';
-    }
-    if (entry->flag_plus && positive) {
-      str_num[0] = '+';
+    // Set preceding minus , plus or empty space
+    if (!positive || entry->flag_plus) {
+      if (!positive) {
+        str_num[0] = '-';
+      }
+      if (entry->flag_plus && positive) {
+        str_num[0] = '+';
+      }
+    } else {
+      if (entry->flag_space) {
+        str_num[0] = ' ';
+      }
     }
     int i = 0;
     while (str_num[i] != '\0') {
@@ -194,15 +240,24 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
     }
   } else {
     if (entry->precision < 0) {
-      if (!positive) {
-      UnshiftChar(str_num, '-');
-      str_len++;
-      diff--;
-      }
-      if (entry->flag_plus && positive) {
-        UnshiftChar(str_num, '+');
-        str_len++;
-        diff--;
+      // Set preceding minus , plus or empty space
+      if (!positive || entry->flag_plus) {
+        if (!positive) {
+          UnshiftChar(str_num, '-');
+          str_len++;
+          diff--;
+        }
+        if (entry->flag_plus && positive) {
+          UnshiftChar(str_num, '+');
+          str_len++;
+          diff--;
+        }
+      } else {
+        if (entry->flag_space) {
+          UnshiftChar(str_num, ' ');
+          str_len++;
+          diff--;
+        }
       }
     }
     if (entry->flag_minus) {
@@ -228,13 +283,8 @@ void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
 }
 
 // Copy f specifier into buffer
-// void CpyFormattedFloatSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str_num) {
-//   if (entry->precision) {
+// void CpyFormattedFltSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str_num) {
 
-//   } else {
-//     int str_len = strlen(str_num);
-//     // Push 0s to end of float if no precision
-//   }
 // }
 
 // Find where specifier ends (need to add the type check with argument)
@@ -442,7 +492,7 @@ int SetPrecision(specifierEntry *entry, int start_pos, char *spec) {
   }
   // Set precision to 1 if only dot is present
   if (precision_len == 0) {
-    if (entry->type == 's') {
+    if (entry->type == 's' || entry->type == 'f') {
       entry->precision = 0;
     } else {
       entry->precision = 1;
@@ -670,8 +720,16 @@ int Sprintf(char *buff, char *str, ...) {
         char *arg = va_arg(ap, char *);
         CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
       } else if (entry.type == 'f') {
-        // float arg = va_arg(ap, float);
-        // CpyFormattedStrSpecifier(placeholder, &buffPos, &entry, arg);
+        double arg = va_arg(ap, double);
+        int precision = entry.precision;
+        if (precision > 9) {
+          precision = 9;
+        } else if (precision < 0) {
+          precision = 6;
+        }
+        int positive = arg >= 0 ? 1 : 0; 
+        FloatToString (arg, str_num, precision);
+        CpyFormattedIntSpecifier(placeholder, &buffPos, &entry, str_num, positive);
       }
       i = spec_end - 1;
       continue;
@@ -692,7 +750,7 @@ int Sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  Sprintf(buff, "This is %5.2d;\n", -5);
-  printf("%s\n", buff);
+  Sprintf(buff, "|%+020f|\n", 1333.45);
+  printf("%s", buff);
   return 0;
 }
