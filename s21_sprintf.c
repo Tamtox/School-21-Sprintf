@@ -695,6 +695,7 @@ int s21_sprintf(char *buff, char *str, ...) {
       } else if (entry.type == 'f') {
         double arg = va_arg(ap, double);
         int precision = entry.precision;
+        entry.precision = -1;
         if (precision > 9) {
           precision = 9;
         } else if (precision < 0) {
@@ -723,7 +724,7 @@ int s21_sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  s21_sprintf(buff, "|%+020f|\n", 1333.45);
+  s21_sprintf(buff, "|%+20.5f|\n", -1333.45);
   printf("%s", buff);
   return 0;
 }
