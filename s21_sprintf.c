@@ -48,6 +48,7 @@ int StringNumToInt(char *num) {
 }
 
 void NumToString(double num, char *str_num) {
+  printf("%lf\n", num);
   if (num < 0) {
     num = num * -1;
   }
@@ -58,10 +59,11 @@ void NumToString(double num, char *str_num) {
       str_num[i] = x + 48;
       break;
     }
-    int x = fmod(num, 10.0);
+    double div = 10.0;
+    int x = fmod(num, div);
     str_num[i] = x + 48;
     i++;
-    num = num / 10;
+    num = num / div;
   }
   str_num[i + 1] = '\0';
   ReverseStr(str_num);
@@ -71,6 +73,12 @@ void NumToString(double num, char *str_num) {
 void FloatToString (double num, char *str_num, int precision) {
   if (num < 0) {
     num = num * -1;
+  }
+  // Check if float is less than 1
+  int less_than_one = num < 1 ? 1 : 0;
+  if (less_than_one) {
+    double one = 1.0;
+    num = num + one;
   }
   // Float adjustment
   for (int i = 0; i < precision; i++) {
@@ -95,6 +103,9 @@ void FloatToString (double num, char *str_num, int precision) {
     str_num[i + 1] = '\0';
   } else {
     str_num[i] = '\0';
+  }
+  if (less_than_one) {
+    str_num[0] = '0';
   }
 }
 
@@ -162,7 +173,11 @@ void CpyFormattedStrSpecifier(char *buff, int *buffPos, specifierEntry *entry, c
 void CpyFormattedIntSpecifier(char *buff, int *buffPos, specifierEntry *entry, char *str_num, int positive) {
   int str_len  = strlen(str_num);
   // Apply precision
-  if (entry->precision > 0) {
+  if (entry->precision >= 0) {
+    if (str_num[0] == '0' && entry->precision == 0) {
+      str_num[0] = '\0';
+      str_len = 0;
+    }
     int diff = entry->precision - str_len;
     if (diff > 0) {
       for(int i = 0; i < diff; i++) {
@@ -724,7 +739,8 @@ int s21_sprintf(char *buff, char *str, ...) {
 int main() {
   char buff[500] = {'\0'};
   // String
-  s21_sprintf(buff, "|%+20.5f|\n", -1333.45);
+  int res = s21_sprintf(buff, "%7.7f", -11.1234560);
+  printf("%d\n", res);
   printf("%s", buff);
   return 0;
 }
